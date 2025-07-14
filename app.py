@@ -3,9 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
 import os
 
 load_dotenv()
+
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 app = Flask(__name__)
 CORS(app)
@@ -180,8 +184,15 @@ def login():
     if not user or not user.check_password(password):
         return jsonify({'error': 'Invalid email or password'}), 401
 
-    return jsonify({'message': 'Login successful'}), 200
+    token = jwt.encode({
+        'user_id': user.id,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }, SECRET_KEY, algorithm='HS256')
 
+    return jsonify({
+        'message': 'Login successful',
+        'token': token
+    }), 200
 
 
 @app.route('/test-json', methods=['POST'])
